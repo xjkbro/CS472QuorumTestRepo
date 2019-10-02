@@ -1,0 +1,9 @@
+class Position 
+    public number posX = 0
+    public number posY = 0
+
+    action setPosition(number x,number y)
+        posX = x
+        posY = y
+    end
+end

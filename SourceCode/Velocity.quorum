@@ -1,0 +1,13 @@
+use Libraries.Compute.Math
+
+class Velocity 
+    public number posX = 0
+    public number posY = 0
+    Math math
+    action setVelocity(number angle, number speed)
+        
+        number angleInRad = angle * math:pi/180
+        posX = speed * math:Cosine(angleInRad)
+        posY = - speed * math:Sine(angleInRad)
+    end
+end

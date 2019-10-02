@@ -1,0 +1,48 @@
+use Libraries.Game.Graphics.Color
+use Libraries.Game.Graphics.Drawable
+use Libraries.Compute.Random
+
+class Particle is Drawable
+
+    public Drawable particle
+    public Position position
+    public number life = 0
+    public Velocity velocity
+    public Color color
+    public number size = 0
+    public number speed = 0
+    public number update = 0 
+
+    action createParticle(number x, number y, number l, number a, number sp) 
+    /*  parameters
+        x - x position
+        y - y position
+        l - life
+        a - angle
+        sp - speed
+    */
+        
+        position:setPosition(x,y)
+        life = l
+        velocity:setVelocity(a,sp)
+        color:SetColor(0,0,1,1)
+        
+    end
+
+    action loadParticle()
+
+        particle:LoadFilledCircle(30, color)
+        particle:SetX(position:posX)
+        particle:SetY(position:posY)
+        Add(particle)
+    end
+
+    action Update(number dt)
+        life = life - dt
+        if life > 0
+            position:posX = position:posX + velocity:posX * dt
+            position:posY = position:posY + velocity:posY * dt
+        end
+        
+    end
+end

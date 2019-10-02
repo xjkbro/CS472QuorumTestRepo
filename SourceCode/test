@@ -1,0 +1,30 @@
+use Libraries.Game.Game
+use Libraries.Game.Graphics.Drawable
+
+class Main is Game
+    Drawable spaceship
+
+    action Main
+        SetScreenSize(1000, 8000)
+        StartGame()
+    end
+
+    action CreateGame
+        spaceship:LoadFilledRectangle(150, 50)
+        
+
+        //spaceship:SetX(250)
+        //spaceship:SetY(200)
+
+        spaceship:SetRotation(-45)
+        Add(spaceship)
+    end
+
+    action Update(number seconds)
+        number newX = spaceship:GetX()+100 * seconds
+        number newY = spaceship:GetY()+100 * seconds
+        
+        spaceship:SetPosition(newX, newY)
+        spaceship:Rotate(1)
+    end
+end

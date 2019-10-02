@@ -1,29 +1,40 @@
 use Libraries.Game.Game
 use Libraries.Game.Graphics.Drawable
+use Libraries.Game.Graphics.Camera
+use Libraries.Game.Graphics.Color
 
 class Main is Game
-    Drawable spaceship
+    number screenWidth = 1280
+    number screenHeight = 720
+
+    Particle p
+    Drawable r
+    Camera camera = undefined
 
     action Main
+        SetScreenSize(1280,720)
         StartGame()
     end
 
     action CreateGame
-        spaceship:LoadFilledRectangle(150, 50)
+        number midW = screenWidth/2
+        number midH = screenHeight/2
+        r:LoadFilledRectangle(10,10)
+        p:createParticle(midW,midH,0,0,0)
+        //p:loadParticle()
+
+        //r:LoadFilledRectangle(150, 50)
+        p:loadParticle()
+        Add(p)
+        r:SetX(midW)
+        r:SetY(midH)
+       // Add(r)
         
 
-        //spaceship:SetX(250)
-        //spaceship:SetY(200)
-
-        spaceship:SetRotation(-45)
-        Add(spaceship)
+       Add(r)
     end
 
     action Update(number seconds)
-        number newX = spaceship:GetX()+100 * seconds
-        number newY = spaceship:GetY()+100 * seconds
-        
-        spaceship:SetPosition(newX, newY)
-        spaceship:Rotate(1)
+       
     end
 end
