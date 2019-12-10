@@ -1,0 +1,15 @@
+use Libraries.Game.GameStateManager
+use Libraries.Interface.Behaviors.Behavior
+use Libraries.Interface.Events.BehaviorEvent
+use Libraries.Interface.Item
+
+class EnterBehavior is Behavior
+    action Run(BehaviorEvent event)
+        Item item = event:GetItem()
+        
+        if item is FocusTextField
+            GameStateManager manager
+            manager:GetGame():SetFocus(undefined)
+        end
+    end
+end

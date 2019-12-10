@@ -1,0 +1,35 @@
+use Libraries.Compute.Math
+use Libraries.Game.Game
+use Libraries.Game.Graphics.Label
+
+class FPS 
+    Label fpsLabel
+    Label countLabel
+    Math math
+    number countedSeconds = 0
+    number frames = 0
+    private ParticleEmitter3D particleEmitter
+
+    action Create(ParticleEmitter3D emitter, Game game)
+        particleEmitter = emitter
+        fpsLabel:SetPosition(10, game:GetScreenHeight() - 64)
+        fpsLabel:SetText("Frames Per Second: ")
+        game:Add(fpsLabel)
+        countLabel:SetPosition(10, game:GetScreenHeight() - 84)
+        countLabel:SetText("Spawned Particles: ")
+        game:Add(countLabel)
+    end
+
+    action Update(number seconds)
+        countedSeconds = countedSeconds + seconds
+        frames = frames + 1
+        
+        if countedSeconds >= 1 
+            number fps = math:Round(frames / countedSeconds, 2)
+            fpsLabel:SetText("Frames Per Second: " + cast(text, fps))
+            countLabel:SetText("Spawned Particles: " + cast(text, cast(integer, particleEmitter:GetParticleCount())))
+            countedSeconds = 0 
+            frames = 0
+        end
+    end
+end

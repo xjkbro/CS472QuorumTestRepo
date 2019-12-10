@@ -1,0 +1,15 @@
+use Libraries.Interface.Behaviors.Behavior
+use Libraries.Interface.Events.BehaviorEvent
+use Libraries.System.File
+
+class OpenParticleFile is Behavior
+    action run(BehaviorEvent event)
+        ParticleEmitter3D emitter
+        ParticleIO particleOut 
+        text readname=" "
+
+        particleOut:WriteEmitterProperties(emitter,readname)
+        particleOut:ReadEmitterProperties(emitter, readname) 
+    end
+end
+   

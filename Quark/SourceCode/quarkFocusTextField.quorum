@@ -1,0 +1,269 @@
+use Libraries.Compute.Vector3
+use Libraries.Game.Graphics.Color
+use Libraries.Interface.Controls.TextBox
+use Libraries.Interface.Controls.TextField
+use Libraries.Interface.Events.FocusEvent
+use Libraries.Language.Errors.Error
+use Libraries.Language.Errors.ParseError
+
+class FocusTextField is TextField
+    private Color color
+    private Color getColor
+    private ParticleEmitter3D emitter
+    private Vector3 vector
+    private Vector3 getVector
+    private constant integer NULL = 984321
+    private text label = ""
+    private text prevText = ""
+    private text title = ""
+
+    /*
+    Description:    initializes the textfields by calling the appropriate Get() function from the particle emitter
+                    calls getVector() or getColor() if the Get() returns a Vector3 or Color type
+    */
+    action InitializeTextFields()
+        boolean isColor = false
+
+        if title = "Lifetime"
+            if label = "Minimum Seconds"
+                me:SetText(cast(text, emitter:GetMinLifeTime())) 
+            else
+                me:SetText(cast(text, emitter:GetMaxLifeTime())) 
+            end
+            prevText = me:GetText()
+            return now
+        elseif title = "Start Position Minimum"
+            getVector = emitter:GetMinStartPosition()
+        elseif title = "Start Position Maximum"
+            getVector = emitter:GetMaxStartPosition()
+        elseif title = "Start Velocity Minimum"
+            getVector = emitter:GetMinStartVelocity()
+        elseif title = "Start Velocity Maximum"
+            getVector = emitter:GetMaxStartVelocity()
+        elseif title = "Start Scale Minimum"
+            getVector = emitter:GetMinStartScale()
+        elseif title = "Start Scale Maximum"
+            getVector = emitter:GetMaxStartScale()
+        elseif title = "End Scale Minimum"
+            getVector = emitter:GetMinEndScale()
+        elseif title = "End Scale Maximum"
+            getVector = emitter:GetMaxEndScale()
+        elseif title = "Start Color Minimum"
+            getColor = emitter:GetMinStartColor()
+            isColor = true
+        elseif title = "Start Color Maximum"
+            getColor = emitter:GetMaxStartColor()
+            isColor = true
+        elseif title = "End Color Minimum"
+            getColor = emitter:GetMinEndColor()
+            isColor = true
+        elseif title = "End Color Maximum"
+            getColor = emitter:GetMaxEndColor()
+            isColor = true
+        elseif title = "Gravity"
+            me:SetText(cast(text, emitter:GetGravity()))
+            prevText = me:GetText()
+            return now
+        elseif title = "Maximum Particles"
+            me:SetText(cast(text, emitter:GetMaxParticles()))
+            prevText = me:GetText()
+            return now
+        elseif title = "Emission Rate"
+            me:SetText(cast(text, emitter:GetEmissionRate()))
+            prevText = me:GetText()
+            return now
+        end
+
+        if isColor = false
+            GetVector3()
+        else
+            GetColor()
+        end
+          
+        color:SetRed(NULL)
+        color:SetGreen(NULL)
+        color:SetBlue(NULL)
+        color:SetAlpha(NULL)
+        vector:SetX(NULL)
+        vector:SetY(NULL)
+        vector:SetZ(NULL)
+        prevText = me:GetText()
+    end
+
+    /*
+    Parameter:      the number that was inputted 
+    Description:    updates the appropriate particle emitter property 
+                    setVector() and setColor() is called depending on if the property that the textfields is for
+    */ 
+    action UpdateParticleEmitter(number currNum)
+
+        if title = "Lifetime"
+            if label = "Minimum Seconds"
+                emitter:SetMinLifeTime(currNum)
+            else
+                emitter:SetMaxLifeTime(currNum)
+            end
+        elseif title = "Start Position Minimum"
+            SetVector3(label, currNum)
+            emitter:SetMinStartPosition(vector:GetX(), vector:GetY(), vector:GetZ())
+        elseif title = "Start Position Maximum"
+            SetVector3(label, currNum)
+            emitter:SetMaxStartPosition(vector:GetX(), vector:GetY(), vector:GetZ())
+        elseif title = "Start Velocity Minimum"
+            SetVector3(label, currNum)
+            emitter:SetMinStartVelocity(vector:GetX(), vector:GetY(), vector:GetZ())            
+        elseif title = "Start Velocity Maximum"
+            SetVector3(label, currNum)
+            emitter:SetMaxStartVelocity(vector:GetX(), vector:GetY(), vector:GetZ())                        
+        elseif title = "Start Scale Minimum"
+            SetVector3(label, currNum)
+            emitter:SetMinStartScale(vector:GetX(), vector:GetY(), vector:GetZ())
+        elseif title = "Start Scale Maximum"
+            SetVector3(label, currNum)
+            emitter:SetMaxStartScale(vector:GetX(), vector:GetY(), vector:GetZ())
+        elseif title = "End Scale Minimum"
+            SetVector3(label, currNum)
+            emitter:SetMinEndScale(vector:GetX(), vector:GetY(), vector:GetZ())
+        elseif title = "End Scale Maximum"
+            SetVector3(label, currNum)
+            emitter:SetMaxEndScale(vector:GetX(), vector:GetY(), vector:GetZ())
+        elseif title = "Start Color Minimum"
+            SetColor(label, currNum)
+            emitter:SetMinStartColor(color:GetRed(), color:GetGreen(), color:GetBlue(), color:GetAlpha())
+        elseif title = "Start Color Maximum"
+            SetColor(label, currNum)
+            emitter:SetMaxStartColor(color:GetRed(), color:GetGreen(), color:GetBlue(), color:GetAlpha())
+        elseif title = "End Color Minimum"
+            SetColor(label, currNum)
+            emitter:SetMinEndColor(color:GetRed(), color:GetGreen(), color:GetBlue(), color:GetAlpha())
+        elseif title = "End Color Maximum"
+            SetColor(label, currNum)
+            emitter:SetMaxEndColor(color:GetRed(), color:GetGreen(), color:GetBlue(), color:GetAlpha())
+        elseif title = "Gravity"
+            emitter:SetGravity(currNum)
+        elseif title = "Maximum Particles"
+            emitter:SetMaxParticles(currNum)
+        elseif title = "Emission Rate"
+            emitter:SetEmissionRate(currNum)
+        end
+    end
+
+    /*
+    Description:    overridden action from the inherited TextField class.
+                    is automatically called when the text cursor is no longer in the textbox
+                    parse the input and calls updateParticleEmitter()
+    */ 
+    action LostFocus(FocusEvent event)
+        me:Select(0, 0)     // make sure nothing is selected when focus is lost
+        HideCaret()
+        
+        number currNum = 0
+        text t = me:GetText()
+
+        if t = prevText 
+            return now
+        end
+
+        // error handling for putting letters in the input fields
+        check
+            currNum = t:ParseNumber()
+        detect e is Error or ParseError
+            me:SetText(prevText)
+            return now
+        end
+        
+        if currNum = NULL
+            me:SetText(prevText)
+            return now
+        end
+        
+        prevText = t
+        UpdateParticleEmitter(currNum)
+    end
+    
+    /*
+    Description:    overridden action from the inherited TextField class.
+                    is automatically called when the text cursor appears in the textbox
+                    selects all the text in the textbox
+    */ 
+    action GainedFocus(FocusEvent event)
+        //select all upon clicking textfield
+        integer endIndex = me:GetSize()
+        me:SetCaretPosition(endIndex)
+        me:Select(0, endIndex, true)
+        ShowCaret()
+    end
+
+    /*
+    Description:    sets the current textfield's text to either the red, green, blue, or alpha field of getColor
+    */
+    action GetColor()
+
+        if label = "R"
+            me:SetText(cast(text, getColor:GetRed() * 255))
+        elseif label = "G"
+            me:SetText(cast(text, getColor:GetGreen() * 255))
+        elseif label = "B"
+            me:SetText(cast(text, getColor:GetBlue() * 255))
+        elseif label = "A"
+            me:SetText(cast(text, getColor:GetAlpha() * 255))
+        end
+    end
+
+    /*
+    Description:    sets the current textfield's text to either the x, y, or z field of getVector
+    */
+    action GetVector3()
+
+        if label = "X"
+            me:SetText(cast(text, getVector:GetX()))
+        elseif label = "Y"
+            me:SetText(cast(text, getVector:GetY()))
+        elseif label = "Z"
+            me:SetText(cast(text, getVector:GetZ()))
+        end
+    end
+
+    /*
+    Parameter:      the Color to be changed, the label of the textfield, and the user-inputted number that will be the color's new value
+    Description:    sets the red, green, blue, or alpha value to currNum
+    */ 
+    action SetColor(text label, number currNum)
+
+        if label = "R"
+            color:SetRed(currNum/255)
+        elseif label = "G"
+            color:SetGreen(currNum/255)
+        elseif label = "B"
+            color:SetBlue(currNum/255)
+        elseif label = "A"
+            color:SetAlpha(currNum/255)
+        end
+    end
+
+    action SetLabel(text t)
+        label = t
+    end
+
+    action SetParticleEmitter(ParticleEmitter3D p)
+        emitter = p
+    end 
+
+    action SetTitle(text t)
+        title = t
+    end   
+
+    /*
+    Parameter:      the Vector3 to be changed, the label of the textfield, and the user-inputted number that will be the vector's new value
+    Description:    sets the x, y, or z value to currNum
+    */    
+    action SetVector3(text label, number currNum)
+        if label = "X"
+            vector:SetX(currNum)
+        elseif label = "Y"
+            vector:SetY(currNum)
+        elseif label = "Z"
+            vector:SetZ(currNum)
+        end
+    end
+end

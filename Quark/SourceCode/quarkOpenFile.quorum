@@ -1,0 +1,33 @@
+use Libraries.Data.Formats.JavaScriptObjectNotation
+use Libraries.Game.Game
+use Libraries.Game.Graphics.Texture
+use Libraries.Interface.Behaviors.Behavior
+use Libraries.Interface.Controls.FileChooser
+use Libraries.Interface.Controls.FileFilter
+use Libraries.Interface.Events.BehaviorEvent
+use Libraries.System.File
+
+class OpenFile is Behavior 
+    ParticleEmitter3D emitter
+    Main main
+
+    action Create(ParticleEmitter3D e, Main m)
+        emitter = e
+        main = m
+    end
+
+    action Run(BehaviorEvent event)
+        FileChooser chooser
+        FileFilter filter
+        ParticleIO particle 
+        File file = chooser:OpenFileDialog()
+
+        if file not= undefined
+            output file:GetAbsolutePath() + " from openfile"
+            text location = file:GetAbsolutePath()
+            output file:GetFileName()+ " from openfile"
+            particle:ReadEmitterProperties(emitter, location)
+            main:InitializeTF()
+        end
+    end
+end

@@ -1,0 +1,61 @@
+use Libraries.Interface.Behaviors.Behavior
+use Libraries.Interface.Events.BehaviorEvent
+use Libraries.Interface.Item
+
+class QuarkRadioButtonBehavior is Behavior
+    ParticleEmitter3D emitter
+    text title = ""
+    text label = ""
+
+    action InitializedRadioButton returns boolean
+        if label = "Box"
+            if emitter:GetShape() = "Box"
+                return true
+            end
+        end
+
+        if label = "Cylinder"
+            if emitter:GetShape() = "Cylinder"
+                return true
+            end
+        end
+
+        if label = "Sphere"
+            if emitter:GetShape() = "Sphere"
+                return true
+            end
+        end
+        return false
+    end
+
+    action Dispose()
+
+    end
+
+    action Run(BehaviorEvent event)
+
+        if label = "Box"
+            emitter:SetShape("Box")
+        end
+
+        if label = "Cylinder"
+            emitter:SetShape("Cylinder")
+        end
+
+        if label = "Sphere"
+            emitter:SetShape("Sphere")
+        end
+    end
+
+    action SetLabel(text t)
+        label = t
+    end
+
+    action SetParticleEmitter(ParticleEmitter3D p)
+        emitter = p
+    end
+    
+    action SetTitle(text t)
+        title = t
+    end
+end

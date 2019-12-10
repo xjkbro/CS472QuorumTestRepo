@@ -1,0 +1,18 @@
+use Libraries.Game.Game
+use Libraries.Interface.Behaviors.Behavior
+use Libraries.Interface.Controls.FileChooser
+use Libraries.Interface.Controls.FileFilter
+use Libraries.Interface.Events.BehaviorEvent
+use Libraries.System.File
+
+class CloseFile is Behavior 
+    Game game
+
+    action Create(Game g)
+        game = g
+    end
+
+    action Run(BehaviorEvent event)
+        game:Exit()
+    end
+end

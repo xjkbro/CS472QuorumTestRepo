@@ -1,0 +1,28 @@
+use Libraries.Interface.Behaviors.Behavior
+use Libraries.Interface.Events.BehaviorEvent
+
+class QuarkButtonBehavior is Behavior
+    QuarkScrollPane scrollPane
+    ParticleEmitter3D emitter
+    text name = ""
+
+    action Initialize(text n, QuarkScrollPane s)
+        name = n
+        scrollPane = s
+    end
+
+    action GetName() returns text
+        return name
+    end
+    
+    action SetParticleEmitter(ParticleEmitter3D p)
+        emitter = p
+    end
+
+    action Run(BehaviorEvent event)
+        if name = "Randomize particles emitter!"
+            emitter:InitializeRandom()
+            scrollPane:InitializeTextFields()
+        end
+    end
+end

@@ -1,0 +1,198 @@
+use Libraries.Compute.Matrix4
+use Libraries.Compute.Vector3
+use Libraries.Containers.Array
+use Libraries.Game.Collision.Shapes.CollisionShape3D
+use Libraries.Game.Game
+use Libraries.Game.Graphics.BlendingAttribute
+use Libraries.Game.Graphics.Color
+use Libraries.Game.Graphics.ColorAttribute
+use Libraries.Game.Graphics.Material
+use Libraries.Game.Graphics.Model
+
+class Particle
+    private Model model
+    private Model model2
+    private Color color
+    private Color endColor
+    private Color tempColor
+    private Vector3 endScale
+    private Vector3 scale
+    private Vector3 position
+    private Vector3 tempScale
+    private Vector3 velocity
+    private boolean isAlive = true
+    private number initLife = 0
+    private number lifePercent = 0
+    private number lifeTime = 0
+
+    // Particle Specific Attributes
+    private BlendingAttribute blendingAttribute
+    private ColorAttribute colorAttribute
+
+    action Create(Game game)
+        // Temp variable
+        Color color
+
+        // Default particle scaling and configurations
+        scale:Set(1, 1, 1)
+        model:LoadBox(1, 1, 1, color:White())
+        
+        // Assign blending and color attributes to particle
+        Material material = model:GetMaterials():Get(0)
+        blendingAttribute:opacity = 0
+        colorAttribute = colorAttribute:CreateDiffuse(color:Black())
+        material:Add(blendingAttribute)
+        material:Add(colorAttribute) 
+
+        // Add particle model to the game enviornment
+        game:Add(model)
+    end
+
+    action Remove(Game game)
+        game:Remove(model)
+    end
+
+    action Update(number seconds, number gravity)
+        Vector3 scaledVelocity
+        Vector3 oldScale
+
+        velocity:Add(0, -(0.5 * gravity), 0)
+        scaledVelocity:Set(velocity)
+        scaledVelocity:Scale(seconds)
+        model:SetPosition(model:GetPosition():Add(scaledVelocity))
+        lifeTime = lifeTime - seconds
+        lifePercent = 1-(lifeTime/initLife)
+
+        tempColor:LinearInterpolation(endColor, lifePercent)
+        SetColor(tempColor)
+
+        oldScale:Set(GetScale())
+        oldScale:Set(1 / oldScale:GetX(), 1 / oldScale:GetY(), 1 / oldScale:GetZ())
+        SetScale(oldScale)
+        tempScale:Set(1/tempScale:GetX(), 1/tempScale:GetY(), 1/tempScale:GetZ())
+        tempScale:LinearInterpolation(endScale, lifePercent)
+        SetScale(tempScale)
+    end
+
+    public action ClearModel()
+        model:GetMaterials():Empty()
+        model:GetNodes():Empty()
+        model:GetAnimations():Empty()    
+    end
+
+    public action IsAlive returns boolean
+        return isAlive
+    end
+
+    public action IsLifeTimeOver returns boolean
+        return lifeTime <= 0
+    end
+
+    // Getter methods for particle properties
+    public action GetColor returns Color
+        return color
+    end
+
+    public action GetLifeTime returns number
+        return lifeTime
+    end
+
+    public action GetPosition returns Vector3
+        return position
+    end
+
+    public action GetScale returns Vector3
+        return scale
+    end
+
+    public action GetTransform returns Matrix4
+        return model:GetTransform()
+    end
+
+    public action GetVelocity returns Vector3
+        return velocity
+    end
+
+    // Setter methods for particle properties
+    public action SetColor(Color color)
+        ColorAttribute colorAttribute
+        tempColor = color
+
+        Array<Material> materials = model:GetMaterials()
+        Material material = materials:Get(0)
+        colorAttribute = cast(ColorAttribute, material:GetAttribute(colorAttribute:GetAttributeType(colorAttribute:DIFFUSE_ALIAS)))
+        colorAttribute:color = color
+    end
+
+    public action SetShape(text shape)
+        ClearModel()
+
+        if shape = "Sphere"
+            SetSphere()
+        elseif shape = "Cylinder"
+            SetCylinder()
+        else // Box is our default if no shape is specified
+            SetBox()
+        end
+
+        model:GetMaterials():Get(0):Add(blendingAttribute)
+        model:GetMaterials():Get(0):Add(colorAttribute)
+    end
+
+    private action SetBox()
+        model:LoadBox(1, 1, 1, color:White())
+    end
+
+    private action SetCylinder()
+        model:LoadCylinder(1, 1, 1, color:White())
+    end
+
+    private action SetSphere()
+        model:LoadSphere(1, 1, 1, color:White())
+    end
+
+    public action SetIsAlive(boolean b)
+        isAlive = b
+
+        if not isAlive
+            SetOpacity(0)
+        end
+    end
+
+    public action SetLifeTime(number n)
+        lifeTime = n
+        initLife = n
+    end
+
+    public action SetOpacity(number o)
+        BlendingAttribute blendingAttribute
+
+        Array<Material> materials = model:GetMaterials()
+        Material material = materials:Get(0)
+        blendingAttribute = cast(BlendingAttribute, material:GetAttribute(blendingAttribute:GetAttributeType(blendingAttribute:ALIAS)))
+        blendingAttribute:opacity = o
+    end
+
+    public action SetPosition(Vector3 p)
+        position = p
+        model:SetPosition(p)
+    end
+
+    public action SetScale(Vector3 scale)
+        model:Scale(scale)
+        me:scale:Scale(scale)
+        tempScale = scale
+    end
+
+    public action SetEndScale(Vector3 scale)
+        endScale:Set(scale)
+    end
+
+    public action SetVelocity(Vector3 v)
+        velocity = v
+    end
+
+    public action SetEndColor(Color c)
+        endColor = c
+    end
+end

@@ -1,0 +1,20 @@
+use Libraries.Game.Game
+use Libraries.Game.Graphics.Texture
+use Libraries.Interface.Behaviors.Behavior
+use Libraries.Interface.Controls.FileChooser
+use Libraries.Interface.Controls.FileFilter
+use Libraries.Interface.Events.BehaviorEvent
+use Libraries.System.File
+
+class ResetFile is Behavior 
+    Main main
+
+    action Create(Main m)
+       main = m
+    end
+
+    action Run(BehaviorEvent event)
+       main:ResetParticleEmitter()
+       main:InitializeTF()
+    end
+end

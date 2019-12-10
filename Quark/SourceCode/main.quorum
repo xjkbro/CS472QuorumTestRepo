@@ -1,0 +1,61 @@
+use Libraries.Compute.Random
+use Libraries.Compute.Vector3
+use Libraries.Containers.Array
+use Libraries.Containers.Iterator
+use Libraries.Interface.Events.KeyboardEvent
+use Libraries.Game.Game
+use Libraries.Game.Graphics.AmbientLight
+use Libraries.Game.Graphics.BlendingAttribute
+use Libraries.Game.Graphics.Camera
+use Libraries.Game.Graphics.Color
+use Libraries.Game.Graphics.DirectionalLight
+use Libraries.Game.Graphics.Material
+use Libraries.Game.Graphics.Model
+use Libraries.Game.Graphics.PerspectiveCamera
+use Libraries.Game.InputSet
+use Libraries.Game.InputTable
+use Libraries.Game.ScreenResolution
+
+class Main is Game
+    Camera camera = undefined
+    CameraController cameraController
+    FPS fpsCounter
+    ParticleMenu partMenu
+    ParticleEmitter3D particleEmitter
+    ParticleIO particleIO
+    QuarkScrollPane scrollPane
+
+    action Main
+        ScreenResolution resolution = GetDesktopResolution()
+        SetScreenSize(resolution:GetWidth(), resolution:GetHeight() - 70)   // sets window size
+        output "=============================="
+        output "==========GAME START=========="
+        output "=============================="
+        output "[main.quorum] Starting Particle Engine"
+        SetGameName("Quark Editor")
+        StartGame()
+    end
+
+    action CreateGame
+        cameraController:Create(me)
+        particleEmitter:Create(me)
+        fpsCounter:Create(particleEmitter, me)
+        partMenu:Create(particleEmitter, me)
+        scrollPane:Create(particleEmitter, me)      // scrollpane needs to be created after all the particle properties are set 
+    end
+
+    action Update(number seconds)
+        // Update
+        cameraController:Update()
+        fpsCounter:Update(seconds)
+        particleEmitter:Update(seconds)
+    end
+    
+    action InitializeTF
+        scrollPane:InitializeTextFields()
+    end
+
+    action ResetParticleEmitter
+        particleEmitter:Initialize()
+    end
+end

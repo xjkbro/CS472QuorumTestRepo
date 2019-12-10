@@ -1,0 +1,119 @@
+use Libraries.Compute.Vector2
+use Libraries.Compute.Vector3
+use Libraries.Game.Game
+use Libraries.Game.Graphics.Camera
+use Libraries.Game.Graphics.Color
+use Libraries.Game.Graphics.Model
+use Libraries.Game.InputMonitor
+use Libraries.Game.ScreenResolution
+use Libraries.Interface.Events.MouseEvent
+use Libraries.Interface.Events.KeyboardEvent
+use Libraries.Interface.Item3D
+
+class CameraController
+    private Camera camera = undefined
+    private InputMonitor inputMonitor
+    private Item3D axis
+    private Model xAxis
+    private Model yAxis
+    private Model zAxis
+    private MouseEvent mouseEvent
+    private KeyboardEvent keyEvent
+    private Vector2 mousePosition
+    private Vector3 focusPoint
+    ScreenResolution resolution
+
+
+    action Create(Game game)
+        Color color
+
+        camera = game:GetCamera3D()
+        mousePosition:SetX(inputMonitor:GetMouseX())
+        mousePosition:SetY(inputMonitor:GetMouseY())
+
+        xAxis:LoadBox(0.3, 0.02, 0.02, color:Red())
+        yAxis:LoadBox(0.02, 0.3, 0.02, color:Green())
+        zAxis:LoadBox(0.02, 0.02, 0.3, color:Blue())
+        
+        game:Add(xAxis)
+        game:Add(yAxis)
+        game:Add(zAxis)
+        game:Add(axis)
+        
+        xAxis:SetPosition(0.15, 0, 0)
+        yAxis:SetPosition(0, 0.15, 0)
+        zAxis:SetPosition(0, 0, 0.15)
+        
+        axis:SetPosition(0, 0, 0)
+        axis:Add(xAxis)
+        axis:Add(yAxis)
+        axis:Add(zAxis)
+
+        camera:Move(8, 10, -10)
+        focusPoint:Set(0, 0, 0)
+        resolution = game:GetDesktopResolution()
+    end
+
+    action Update
+        if camera = undefined
+            return now
+        end
+        
+        number mousePosX = inputMonitor:GetMouseX()
+        number mousePosY = inputMonitor:GetMouseY()
+
+        if inputMonitor:IsKeyPressed(keyEvent:SPACE)
+            ResetCamera()
+        end
+
+        if mousePosition:GetX() < resolution:GetWidth() * 0.68  
+            if inputMonitor:IsClicked()
+                Vector3 mouseMoveVector
+                mouseMoveVector:Set(-(mousePosition:GetY() - mousePosY), -(mousePosition:GetX() - mousePosX), 0) 
+                camera:RotateAround(focusPoint, mouseMoveVector, 2)
+            end
+
+            number scrollDelta = inputMonitor:IsScrolled()
+
+            if scrollDelta not= 0
+                Vector3 move
+                move:Set(camera:GetDirection())
+                move = move:Normalize()
+                move:Scale(0.3)
+
+                if scrollDelta > 0
+                    camera:SetPosition(camera:GetPosition():Add(move))
+                elseif scrollDelta < 0
+                    camera:SetPosition(camera:GetPosition():Subtract(move))
+                end
+            end
+        end
+
+        mousePosition:Set(mousePosX, mousePosY)
+        UpdateAxis()
+    end
+
+    action UpdateAxis()
+        Vector3 axisPosition
+        Vector3 cameraDirection
+        Vector3 cameraLeft
+        Vector3 cameraUp
+
+        axisPosition:Set(camera:GetPosition())
+        cameraLeft:Set(camera:GetDirection())
+        cameraLeft:Rotate(camera:GetUp(), -90)
+        cameraDirection:Set(camera:GetDirection())
+        cameraUp:Set(camera:GetUp())
+
+        axisPosition:Add(cameraDirection:Scale(2))
+        axisPosition:Add(cameraLeft:Scale(2))
+        axisPosition:Add(cameraUp:Scale(-1))
+        axis:SetPosition(axisPosition)
+    end
+
+    action ResetCamera()
+        camera:SetYawPitchRoll(0,0,0)
+        camera:SetPosition(3, 5, -20)
+        focusPoint:Set(0,0,0)
+    end
+end

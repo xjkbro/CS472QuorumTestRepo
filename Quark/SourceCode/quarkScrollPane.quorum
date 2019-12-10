@@ -1,0 +1,487 @@
+use Libraries.Containers.Array
+use Libraries.Containers.Iterator
+use Libraries.Game.Game
+use Libraries.Game.Graphics.Color
+use Libraries.Game.InputSet
+use Libraries.Game.InputTable
+use Libraries.Game.ScreenResolution
+use Libraries.Interface.Events.BehaviorEvent
+use Libraries.Interface.Events.KeyboardEvent
+use Libraries.Interface.Events.MouseEvent
+use Libraries.Interface.Controls.Button
+use Libraries.Interface.Controls.RadioButton
+use Libraries.Interface.Controls.ButtonGroup
+use Libraries.Interface.Controls.Checkbox
+use Libraries.Interface.Controls.Control
+use Libraries.Interface.Controls.ScrollPane
+use Libraries.Interface.Controls.TextBox
+use Libraries.Interface.Layouts.FlowLayout
+use Libraries.Interface.Layouts.ManualLayout
+
+/*
+TERMINOLOGY
+    textfield (tf) - the text box for user input
+    label - the label for the tf
+    input field - combo of textfield & label
+           ___________
+    Speed |___________|
+    label   textfield 
+    |_________________|
+        input field
+*/
+
+class QuarkScrollPane is Game
+    // GLOBALS -------------
+    private constant Color COLOR
+    private constant Color BG_COLOR = COLOR:Gray()            // color for label to match the background of the scrollpane
+    private constant Color TF_COLOR = COLOR:White()           // text field color
+
+    private constant integer LEFT_INDENT = HEADER_LEFT_INDENT + 15
+
+    private constant integer FONT_SIZE = 16                   // font size for the labels and tf's
+    private constant integer TF_WIDTH = 150                   // width of the textfield text field
+    private constant integer TEXT_HEIGHT = 22                 // height of the text field
+    private constant integer HEIGHT_SPACER = 40               // vertical spacing between the item above and below
+    private constant integer TF_SPACER = 180                  // horizontal spacing between the label and the tf/checkbox
+    
+    private constant integer TF_3_ROW_WIDTH = 70                     // width of the textfield text field when there's 3 items one row
+    private constant integer TF_3_ROW_SPACER = 45                    // horizontal spacing between the label and the tf/checkbox when there's 3 items on one row
+    private constant integer X_3_ROW_SPACER = TF_3_ROW_WIDTH + 15    // horizontal spacing between 3 input fields on the same row
+
+    private constant integer TF_4_ROW_WIDTH = 65                    // width of the textfield text field when there's 4 items one row
+    private constant integer TF_4_ROW_SPACER = 27                   // horizontal spacing between the label and the tf/checkbox when there's 4 items on one row
+    private constant integer X_4_ROW_SPACER = TF_4_ROW_WIDTH + 8    // horizontal spacing between 4 input fields on the same row
+
+    private constant integer TITLE_FONT_SIZE = 20                           // font size for titles
+    private constant integer TITLE_Y_SIZE = 27                              // height of the title text field
+    private constant integer TITLE_LEFT_INDENT = HEADER_LEFT_INDENT + 10    // left indent for titles
+    private constant integer TITLE_HEIGHT_SPACER = 40                       // vertical spacing between the title and the above item
+   
+    private constant integer HEADER_FONT_SIZE = 32              // font size for titles
+    private constant integer HEADER_X_SIZE = 400                // width of the title text field
+    private constant integer HEADER_Y_SIZE = 40                 // height of the title text field
+    private constant integer HEADER_LEFT_INDENT = 10            // left indent for titles
+    private constant integer HEADER_HEIGHT_SPACER = 70          // vertical spacing between the title and the above item
+
+    private constant ManualLayout MAN
+
+    // class fields
+    private Array<FocusTextField> textFieldArr
+    private ParticleEmitter3D particleEmitter
+    private Control panel
+    private ScrollPane scrollpane
+    private ButtonGroup radios
+
+    /*
+    Parameters:     game (the application window) and the particle emitter
+    Description:    Creates the scrollpane and all the titles and input fields that go in it
+    */
+    public action Create(ParticleEmitter3D emitter, Game game)
+        particleEmitter = emitter      
+        scrollpane:SetBackgroundColor(BG_COLOR)
+
+        // In order to be laid out correctly by the Layout system, we set the
+        // layout values (Pixel or Percentage x, y, width, and height).
+        scrollpane:SetPercentageWidth(0.32)
+        scrollpane:SetPercentageX(0.68)
+
+        ScreenResolution resolution = GetDesktopResolution()
+        scrollpane:SetHeight(resolution:GetHeight() - 96)   // sets window size
+        scrollpane:SetFocusable(true)
+        
+        // This panel exists only to let us manually place elements within it.
+        // The scroll pane will automatically size its internal region to fit
+        // the contents within it vertically, so if this is the only added Item,
+        // the height of the the scroll region will exactly match the size of this panel.
+        panel:SetPixelWidth(400)
+        panel:SetPixelHeight(1900)
+        panel:SetLayout(MAN)
+
+        // Create titles and input fields
+        AddHeader("Particle Emitter", panel:GetPixelHeight() - 50)
+        AddButton("Randomize particles emitter!", "")
+        AddCheckBox("Continuous", "")
+        
+        Array<text> labelArr
+
+        AddTitle("Lifetime")
+        labelArr:Add("Minimum Seconds")
+        AddInputField(labelArr, "Lifetime")
+        labelArr:Empty()
+
+        labelArr:Add("Maximum Seconds")
+        AddInputField(labelArr, "Lifetime")
+        labelArr:Empty()
+        
+        AddTitle("Start Position")
+        AddLabel("Minimum")
+        labelArr:Add("X")
+        labelArr:Add("Y")
+        labelArr:Add("Z")
+        AddInputField(labelArr, "Start Position Minimum")
+
+        AddLabel("Maximum")
+        AddInputField(labelArr, "Start Position Maximum")
+
+        AddTitle("Start Velocity")
+        AddLabel("Minimum")
+        AddInputField(labelArr, "Start Velocity Minimum")
+
+        AddLabel("Maximum")
+        AddInputField(labelArr, "Start Velocity Maximum")
+
+        AddTitle("Start Scale")
+        AddLabel("Minimum")
+        AddInputField(labelArr, "Start Scale Minimum")
+
+        AddLabel("Maximum")
+        AddInputField(labelArr, "Start Scale Maximum")
+
+        AddTitle("End Scale")
+        AddLabel("Minimum")
+        AddInputField(labelArr, "End Scale Minimum")
+
+        AddLabel("Maximum")
+        AddInputField(labelArr, "End Scale Maximum")
+        labelArr:Empty()
+
+        AddTitle("Start Color")
+        AddLabel("Minimum")
+        labelArr:Add("R")
+        labelArr:Add("G")
+        labelArr:Add("B")
+        labelArr:Add("A")
+        AddInputField(labelArr, "Start Color Minimum")
+        AddLabel("Maximum")
+        AddInputField(labelArr, "Start Color Maximum")
+
+        AddTitle("End Color")
+        AddLabel("Minimum")
+        AddInputField(labelArr, "End Color Minimum")
+        AddLabel("Maximum")
+        AddInputField(labelArr, "End Color Maximum")
+        labelArr:Empty()
+
+        AddTitle("Gravity")
+        labelArr:Add("Value")
+        AddInputField(labelArr, "Gravity")
+
+        AddTitle("Maximum Particles")
+        AddInputField(labelArr, "Maximum Particles")
+
+        AddTitle("Emission Rate")
+        AddInputField(labelArr, "Emission Rate")
+        labelArr:Empty()
+
+        AddTitle("Shapes")
+        AddRadioButton("Box", "")
+        AddRadioButton("Cylinder", "")
+        AddRadioButton("Sphere", "")
+        
+        InitializeTextFields()
+
+        scrollpane:Add(panel)
+        scrollpane:FitRegionToContents()
+        game:SetLayout(MAN)
+        game:Add(scrollpane)
+
+        // add behavior to deselect a textbox when it is selected and the user presses enter
+        EnterBehavior enterBehavior
+        InputSet enterSet
+        KeyboardEvent keys
+
+        enterSet:SetKeyboardInput(keys:ENTER)
+        InputTable defaultTable = game:GetDefaultInputTable()
+        defaultTable:Add(enterSet, enterBehavior)
+    end
+
+    public action InitializeTextFields()
+       Iterator<FocusTextField> it = textFieldArr:GetIterator()
+
+       repeat while it:HasNext()
+           FocusTextField tf = it:Next()
+           tf:InitializeTextFields()
+       end
+    end
+
+    /*
+    Parameters:     text for label, text for title, Y position value for button, and the control that contains all the scrollpane's input field
+    Description:    creates and adds a button to the container
+    */
+    private action AddButton(text name, text title, number yPos)
+        Button button
+        QuarkButtonBehavior behavior
+        behavior:Initialize(name, me)
+        behavior:SetParticleEmitter(particleEmitter)
+
+        button:SetName(name)
+        button:SetPosition(20, yPos)
+        button:SetBehavior(behavior)
+        panel:Add(panel:GetItemCount(), button)
+    end
+
+    private action AddButton(text name, text title)
+        number yPos = panel:GetItem(panel:GetItemCount() - 1):GetY() - TITLE_HEIGHT_SPACER
+        AddButton(name, title,  yPos)
+    end
+
+    /*
+    Parameters:     text for label, text for title, and a control that contains all the scrollpane textfields/boxes
+    Description:    Creates a label and its checkbox, adds it to a control to make it a single unit, and adds it to the Scrollpane Container
+                    calls CreateLabel() and CreateCheckBox()
+    */
+    private action AddCheckBox(text labelText, text title)
+        Checkbox cf
+        Control container
+        TextBox label
+        integer curr = panel:GetItemCount()
+
+        container:SetLayout(MAN)
+        label = CreateLabel(labelText)
+        cf = CreateCheckbox(labelText, title)
+        number yVal = panel:GetItem(curr - 1):GetY() - HEIGHT_SPACER
+        container:SetPosition(LEFT_INDENT, yVal)
+        container:Add(0, label)
+        container:Add(1, cf)
+        panel:Add(curr, container)
+    end
+
+    /*
+    Parameters:     the text of the header, the Y position for the header, and the control that contains all the scrollpane textfields/boxes
+    Description:    creates and adds a header to the container
+    */
+    private action AddHeader(text header, number yPos)
+        TextBox t
+
+        t:SetFocusable(false)
+        t:SetName(header)
+        t:SetText(header)
+        t:SetSize(HEADER_X_SIZE, HEADER_Y_SIZE)
+        t:SetFontSize(HEADER_FONT_SIZE)
+        t:SetPosition(HEADER_LEFT_INDENT, yPos)
+        t:SetBackgroundColor(BG_COLOR)
+        panel:Add(panel:GetItemCount(), t)
+    end
+
+    private action AddHeader(text header)
+        number yPos = panel:GetItem(panel:GetItemCount() - 1):GetY()
+        AddHeader(header,  yPos - HEADER_HEIGHT_SPACER)
+    end
+
+    /*
+    Parameters:     text array for labels, text for title, and a control that contains all the scrollpane textfields/boxes
+    Description:    Creates input fields (a label and its textfield), adds it to a control to make it a single unit, 
+                    and adds it to the Scrollpane Container.
+                    Only allows 1, 3, or 4 input fields to be on the same row.
+                    calls CreateLabel() and CreateFocusTextField()
+    */
+    private action AddInputField(Array<text> labelTextArr, text title)
+        integer labelXSpacer = 0
+        integer tfXSpacer = 0
+
+        // get horizontal spacing between a label and the input field to the left of it
+        // and the horizontal spacing between a textfield and its label
+        if labelTextArr:GetSize() = 3
+            labelXSpacer = TF_3_ROW_SPACER + X_3_ROW_SPACER
+            tfXSpacer = X_3_ROW_SPACER
+        elseif labelTextArr:GetSize() = 4    
+            labelXSpacer = TF_4_ROW_SPACER + X_4_ROW_SPACER
+            tfXSpacer = X_4_ROW_SPACER
+        elseif labelTextArr:GetSize() not= 1 
+            return now
+        end
+        
+        Control container
+        container:SetLayout(MAN)
+        integer curr = panel:GetItemCount()
+        number yVal = panel:GetItem(curr - 1):GetY() - HEIGHT_SPACER
+        integer index = 0
+        integer containerCnt = 0
+
+        container:SetPosition(LEFT_INDENT, yVal)
+
+        // create input with appropriate x-coordinate offset and add to container
+        repeat labelTextArr:GetSize() times
+            number labelXOffset = 0
+            number tfXOffset = 0
+
+            if containerCnt > 0
+                labelXOffset = container:GetItem(containerCnt - 2):GetX() + labelXSpacer
+                tfXOffset = container:GetItem(containerCnt - 1):GetX() + tfXSpacer
+            end
+            
+            text labelText = labelTextArr:Get(index)
+            TextBox label = CreateLabel(labelText, labelXOffset)
+            FocusTextField tf = CreateFocusTextField(labelText, title,labelTextArr:GetSize(), tfXOffset)
+
+            container:Add(label)
+            container:Add(tf)
+
+            index = index + 1
+            containerCnt = containerCnt + 2
+        end
+
+        panel:Add(curr, container)
+    end
+
+    /*
+    Parameters:     text for label, text for title, Y position value for button, and the control that contains all the scrollpane input field
+    Description:    creates and returns a button
+    */
+    private action AddLabel(text labelText)
+        TextBox t = CreateLabel(labelText)
+        number yVal = panel:GetItem(panel:GetItemCount() - 1):GetY() - HEIGHT_SPACER
+
+        t:SetPosition(LEFT_INDENT, yVal)
+        panel:Add(panel:GetItemCount(), t)
+    end
+
+    private action AddRadioButton(text labelText, text title)
+        RadioButton cf
+        Control container
+        TextBox label
+        integer curr = panel:GetItemCount()
+
+        container:SetLayout(MAN)
+        label = CreateLabel(labelText)
+        cf = CreateRadioButton(labelText, title)
+        
+        radios:AddButton(cf)
+
+        number yVal = panel:GetItem(curr - 1):GetY() - HEIGHT_SPACER
+        container:SetPosition(LEFT_INDENT, yVal)
+        container:Add(0, label)
+        container:Add(1, cf)
+        panel:Add(curr, container)
+    end
+
+    /*
+    Parameters:     text for title, Y position value for title, and the control that contains all the scrollpane textfields/boxes
+    Description:    creates and adds title to the container
+    */
+    private action AddTitle(text title, number yPos)
+        TextBox t
+
+        t:SetFocusable(false)
+        t:SetName(title)
+        t:SetText(title)
+        t:SetSize(HEADER_X_SIZE, TITLE_Y_SIZE)
+        t:SetFontSize(TITLE_FONT_SIZE)
+        t:SetPosition(TITLE_LEFT_INDENT, yPos)
+        t:SetBackgroundColor(BG_COLOR)
+        panel:Add(panel:GetItemCount(), t)
+    end
+
+    private action AddTitle(text title)
+        number yPos = panel:GetItem(panel:GetItemCount() - 1):GetY()
+        AddTitle(title,  yPos - TITLE_HEIGHT_SPACER)
+    end
+
+    // Calculates the width that the textbox should be
+    private action CalculateWidth(text s) returns integer
+        return (s:GetSize() + 1) * 10
+    end
+
+    /*
+    Parameters:     text for label and text for title
+    Description:    creates and returns a checkbox
+    */
+    private action CreateCheckbox(text labelText, text title) returns Checkbox
+        Checkbox box
+        QuarkCheckboxBehavior behavior
+        integer myTFSpacer = CalculateWidth(labelText) + 10
+
+        behavior:SetTitle(title)
+        behavior:SetLabel(labelText)
+        behavior:SetParticleEmitter(particleEmitter)
+
+        box:SetPosition(myTFSpacer, -2)
+        box:SetFontColor(BG_COLOR)
+        box:SetFontSize(FONT_SIZE)
+        box:SetBehavior(behavior)
+        box:SetToggleState(behavior:InitializeCheckBox())
+        return box
+    end
+
+    /*
+    Parameters:     text for label, text for title, how many items will be on this row, and an offset for the x position
+    Description:    creates and returns a textfield. The tf width is based on itemsPerRow
+    */
+    private action CreateFocusTextField(text labelText, text title, integer itemsPerRow, number xOffset) returns FocusTextField
+        FocusTextField t
+        integer myTFWidth = TF_WIDTH
+        integer myTFSpacer = TF_SPACER
+
+        if itemsPerRow = 3
+            myTFWidth = TF_3_ROW_WIDTH
+            myTFSpacer = TF_3_ROW_SPACER
+        elseif itemsPerRow = 4
+            myTFWidth = TF_4_ROW_WIDTH
+            myTFSpacer = TF_4_ROW_SPACER
+        end
+        
+        t:SetFontSize(FONT_SIZE)
+        t:SetTitle(title)
+        t:SetLabel(labelText)
+        t:SetBackgroundColor(TF_COLOR)
+        t:SetSize(myTFWidth, TEXT_HEIGHT)
+        t:SetPosition(myTFSpacer + xOffset, 0)
+        t:SetParticleEmitter(particleEmitter)
+
+        if textFieldArr:GetSize() > 0
+            FocusTextField tf = textFieldArr:GetFromEnd()
+            tf:SetNextFocus(t)
+            t:SetPreviousFocus(tf)
+        end
+
+        textFieldArr:Add(t)
+        
+        return t
+    end
+
+    private action CreateFocusTextField(text labelText, text title) returns FocusTextField
+        return CreateFocusTextField(labelText, title, 1, 0)
+    end
+
+    /*
+    Parameters:     text for label, text for title, and an offset for the x position
+    Description:    creates and returns a label
+    */
+    private action CreateLabel(text labelText, number xOffset) returns TextBox
+        TextBox t
+
+        t:SetFontSize(FONT_SIZE)
+        t:SetFocusable(false)
+        t:SetText(labelText)
+        t:SetBackgroundColor(BG_COLOR)
+        t:SetSize(CalculateWidth(labelText), TEXT_HEIGHT)
+        t:SetPosition(xOffset, -2)
+        return t
+    end
+
+    private action CreateLabel(text labelText) returns TextBox
+        return CreateLabel(labelText, 0)
+    end
+
+    /*
+    Parameters:     text for label and text for title
+    Description:    creates and returns a radio button
+    */
+    private action CreateRadioButton(text labelText, text title) returns RadioButton
+        RadioButton button
+        QuarkRadioButtonBehavior behavior
+        integer myTFSpacer = CalculateWidth(labelText) + 10
+
+        behavior:SetTitle(title)
+        behavior:SetLabel(labelText)
+        behavior:SetParticleEmitter(particleEmitter)
+
+        button:SetPosition(myTFSpacer, -2)
+        button:SetFontColor(BG_COLOR)
+        button:SetFontSize(FONT_SIZE)
+        button:SetBehavior(behavior)
+        button:SetToggleState(behavior:InitializedRadioButton())
+
+        return button
+    end
+end

@@ -1,0 +1,30 @@
+use Libraries.Data.Formats.JavaScriptObjectNotation
+use Libraries.Interface.Behaviors.Behavior
+use Libraries.Interface.Controls.FileChooser
+use Libraries.Interface.Controls.FileFilter
+use Libraries.Interface.Events.BehaviorEvent
+use Libraries.System.File
+
+class SaveFile is Behavior
+    ParticleEmitter3D emitter
+
+    action Create(ParticleEmitter3D e)
+        emitter = e
+    end
+
+    action Run(BehaviorEvent event)
+        FileChooser chooser
+        FileFilter filter
+        JavaScriptObjectNotation json
+        ParticleIO partIO
+        File file = chooser:SaveFileDialog()
+
+        if file not= undefined
+            output file:GetAbsolutePath()
+            text location = file:GetAbsolutePath()
+            partIO:WriteEmitterProperties(emitter, location)
+        end
+    end
+end
+        
+  

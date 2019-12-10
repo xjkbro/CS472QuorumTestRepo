@@ -1,0 +1,467 @@
+use Libraries.Compute.Random
+use Libraries.Compute.Vector3
+use Libraries.Containers.Array
+use Libraries.Containers.Iterator
+use Libraries.Game.Collision.Shapes.Box
+use Libraries.Game.Game
+use Libraries.Game.Layer3D
+use Libraries.Game.Graphics.BlendingAttribute
+use Libraries.Game.Graphics.Camera
+use Libraries.Game.Graphics.Color
+use Libraries.Game.Graphics.Material
+use Libraries.Game.Graphics.Model
+use Libraries.Game.Graphics.PerspectiveCamera
+
+class ParticleEmitter3D
+    private Array<Particle> particles
+    private Color color
+    private Color maxStartColor
+    private Color minStartColor
+    private Color maxEndColor
+    private Color minEndColor
+    private Game gameRef
+    private Random random
+    private Vector3 maxEndScale
+    private Vector3 maxStartPosition
+    private Vector3 maxStartScale
+    private Vector3 maxStartVelocity
+    private Vector3 minEndScale
+    private Vector3 minStartPosition
+    private Vector3 minStartScale
+    private Vector3 minStartVelocity
+    private boolean continuousEffect = true
+    private boolean singleLoop = false
+    private integer emissionRate = 100
+    private integer maxParticles = 0
+    private integer particleCount = 0
+    private number emissionLifeTime = 1
+    private number gravity = 0
+    private number maxLifeTime = 0
+    private number minLifeTime = 0
+    private number particleIndex = 0
+    private number tempTime = 0
+    private text particleShape = "Box"
+    private constant integer NULL = 984321
+
+    action Create(Game game)
+        gameRef = game
+        Initialize()
+    end
+
+    public action Initialize()
+        SetMinLifeTime(0.5)
+        SetMaxLifeTime(1)
+        SetMinStartVelocity(-5, 5, -5)
+        SetMaxStartVelocity(5, 10, 5)
+        SetMinStartPosition(0, 0, 0)
+        SetMaxStartPosition(1, 1, 1) 
+        SetMinStartScale(0.1, 0.1, 0.1)
+        SetMaxStartScale(0.2, 0.2, 0.2)
+        SetMinEndScale(0.5, 0.5, 0.5)
+        SetMaxEndScale(0.6, 0.6, 0.6)
+        SetMinStartColor(color:White())
+        SetMaxStartColor(color:Black())
+        SetMinEndColor(color:White())
+        SetMaxEndColor(color:Black())
+        SetGravity(0)
+        SetMaxParticles(100)
+        SetEmissionRate(100)
+        SetContinuousEffect(true)
+    end
+
+    public action InitializeRandom()
+            SetMinLifeTime(RandomRange(0.1, 1))
+            SetMaxLifeTime(RandomRange(1, 10))
+            SetMinStartVelocity(RandomRange(-5, 0), RandomRange(-5, 0), RandomRange(-5, 0))
+            SetMaxStartVelocity(RandomRange(5, 10), RandomRange(5, 10), RandomRange(5, 10))
+            SetMinStartPosition(RandomRange(-5, 0), RandomRange(-5, 0), RandomRange(-5, 0))
+            SetMaxStartPosition(RandomRange(0, 5), RandomRange(0, 5), RandomRange(0, 5)) 
+            SetMinStartScale(RandomRange(0.05, 0.1), RandomRange(0.05, 0.1), RandomRange(0.05, 0.1))
+            SetMaxStartScale(RandomRange(0.1, 0.2), RandomRange(0.1, 0.2), RandomRange(0.1, 0.2))
+            SetMinEndScale(RandomRange(0.05, 0.1), RandomRange(0.05, 0.1), RandomRange(0.05, 0.1))
+            SetMaxEndScale(RandomRange(0.1, 0.2), RandomRange(0.1, 0.2), RandomRange(0.1, 0.2))
+            SetMinStartColor(RandomColor(color:Black(), color:White()))
+            SetMaxStartColor(RandomColor(color:Black(), color:White()))
+            SetMinEndColor(RandomColor(color:Black(), color:White()))
+            SetMaxEndColor(RandomColor(color:Black(), color:White()))
+            SetGravity(RandomRange(0, 1))
+            SetMaxParticles(RandomRange(0, 1000))
+            SetEmissionRate(RandomRange(1, maxParticles))
+            SetShape(RandomShape())
+
+            if continuousEffect
+                SetContinuousEffect(true)
+            else
+                SetContinuousEffect(false)
+            end
+    end
+
+    private action InitializeParticle(Particle particle)
+        Vector3 newPosition
+        Vector3 newScale
+        Vector3 newVelocity
+        Vector3 scale
+        Vector3 newEndScale
+
+        newVelocity:Set(RandomRangeV3(minStartVelocity, maxStartVelocity))
+        newScale:Set(RandomRangeV3(minStartScale, maxStartScale))
+        newEndScale:Set(RandomRangeV3(minEndScale, maxEndScale))
+        newPosition:Set(RandomRangeV3(minStartPosition, maxStartPosition))     
+        scale:Set(particle:GetScale())
+        scale:Set(1 / scale:GetX(), 1 / scale:GetY(), 1 / scale:GetZ())
+        particle:SetScale(scale)
+
+        Color newColor = RandomColor(minStartColor, maxStartColor)
+        Color newEndColor = RandomColor(minEndColor, maxEndColor)
+//        Add the following line when color testing is complete :)
+//        Color newEndColor = RandomColorLerp(minEndColor, maxEndColor)
+        number newLifeTime = RandomRange(minLifeTime, maxLifeTime)
+        
+        particle:SetColor(newColor)
+        particle:SetEndColor(newEndColor)
+        particle:SetVelocity(newVelocity)
+        particle:SetPosition(newPosition)
+        particle:SetLifeTime(newLifeTime)
+        particle:SetScale(newScale)
+        particle:SetEndScale(newEndScale)
+        particle:SetOpacity(1)
+        particle:SetShape(particleShape)
+    end
+
+    action SpawnParticles(Game game, integer numParticles)
+        repeat numParticles times
+            if particleCount < maxParticles
+                particleCount = particleCount + 1
+                Particle particle
+                particle:Create(game)
+                InitializeParticle(particle)
+                particles:Add(particle)
+            end
+        end
+    end
+
+    action Update(number seconds)
+        Iterator<Particle> i = particles:GetIterator()
+        number index = emissionRate 
+
+        repeat while i:HasNext()
+            Particle particle = i:Next()
+            particle:Update(seconds, gravity)
+            if particle:IsLifeTimeOver() and index > 0
+                if particle:IsAlive()
+                    InitializeParticle(particle)
+                    index = index - 1     
+                    if not continuousEffect
+                        particle:SetIsAlive(false)
+                    end
+                elseif not particle:IsAlive() and continuousEffect
+                    InitializeParticle(particle)
+                    particle:SetIsAlive(true)
+                    index = index - 1     
+                end
+                if singleLoop
+                    tempTime = tempTime - seconds
+                    InitializeParticle(particle)
+                    particle:SetIsAlive(true)
+                    if tempTime <= 0
+                        particle:SetIsAlive(false)
+                        if tempTime <= -10
+                            tempTime = maxLifeTime
+                        end
+                    end
+                end
+            end
+        end
+
+        if Emit()
+            SpawnParticles(gameRef, emissionRate)
+            emissionLifeTime = 1
+        end
+
+        emissionLifeTime = emissionLifeTime - seconds
+    end
+
+    private action ClearParticleLayer()
+        Iterator<Particle> i = particles:GetIterator()
+        repeat while i:HasNext()
+            Particle particle = i:Next()
+            particle:Remove(gameRef)
+        end
+        
+        particles:Empty()
+    end
+
+    private action Emit() returns boolean
+        return emissionLifeTime <= 0
+    end
+
+    private action RandomShape() returns text
+        // Return random shape
+        text shape = ""
+        number index = RandomRange(0, 2)
+        if index = 0
+            shape = "Box"
+        elseif index = 1
+            shape = "Cylinder"
+        else
+            shape = "Sphere"
+        end
+        return shape
+    end
+
+    private action RandomColor(Color minColor, Color maxColor) returns Color
+        Color c 
+
+        c:SetColor(RandomRange(minColor:GetRed(), maxColor:GetRed()),
+            RandomRange(minColor:GetGreen(), maxColor:GetGreen()),
+            RandomRange(minColor:GetBlue(), maxColor:GetBlue()),
+            RandomRange(minColor:GetAlpha(), maxColor:GetAlpha()))
+        return c
+    end
+
+    private action RandomColorLerp(Color minColor, Color maxColor) returns Color
+        Color c
+        c:SetColor(minColor:GetRed(), minColor:GetGreen(), minColor:GetBlue(), minColor:GetAlpha())
+        c:LinearInterpolation(maxColor, random:RandomNumber())
+        return c
+    end
+    
+    private action RandomRange(number min, number max) returns number
+        return min + (max - min) * random:RandomNumber()
+    end
+
+    private action RandomRange(integer min, integer max) returns integer
+        return cast(integer, min + (max - min) * random:RandomNumber())
+    end
+
+    private action RandomRangeV3(Vector3 min, Vector3 max) returns Vector3
+        Vector3 v
+
+        v:Set(RandomRange(min:GetX(), max:GetX()), 
+            RandomRange(min:GetY(), max:GetY()),
+            RandomRange(min:GetZ(), max:GetZ()))
+        return v
+    end
+
+    // Setter methods for emitter properties (Used by IO)
+    private action SetColor(Color c, number r, number g, number b, number a)
+
+        if r not= NULL
+            c:SetRed(r)
+        end
+
+        if g not= NULL
+            c:SetGreen(g)
+        end
+
+        if b not= NULL
+            c:SetBlue(b)
+        end
+
+        if a not= NULL
+            c:SetAlpha(a)
+        end
+    end
+
+    public action SetContinuousEffect(boolean bool)
+        continuousEffect = bool
+        if continuousEffect = false
+            singleLoop = true
+        else
+            singleLoop = false
+        end
+    end
+
+    public action SetEmissionRate(number rate)
+        emissionRate = cast(integer, rate)
+        particleCount = 0
+
+        ClearParticleLayer()
+        SpawnParticles(gameRef, emissionRate)
+    end
+
+    public action SetGravity(number gravityNum)
+        gravity = gravityNum
+    end
+
+    public action SetMaxParticles(number maxParticlesNum)
+        maxParticles = cast(integer, maxParticlesNum)
+        particleCount = 0
+
+        ClearParticleLayer()
+        SpawnParticles(gameRef, emissionRate)
+    end
+
+    public action SetShape(text shapeName)
+        particleShape = shapeName
+    end
+
+    private action SetVector(Vector3 v, number x, number y, number z)
+
+        if x not= NULL
+            v:SetX(x)
+        end
+
+        if y not= NULL
+            v:SetY(y)
+        end
+
+        if z not= NULL
+            v:SetZ(z)
+        end
+    end
+
+    public action SetMinStartColor(Color color)
+        minStartColor = color
+    end
+    
+    public action SetMinStartColor(number r, number g, number b, number a)
+        SetColor(minStartColor, r, g, b, a)
+    end
+
+    public action SetMaxStartColor(Color color)
+        maxStartColor = color
+    end
+
+    public action SetMaxStartColor(number r, number g, number b, number a)
+        SetColor(maxStartColor, r, g, b, a)
+    end
+
+    public action SetMinEndColor(Color color)
+        minEndColor = color
+    end
+    
+    public action SetMinEndColor(number r, number g, number b, number a)
+        SetColor(minEndColor, r, g, b, a)
+    end
+
+    public action SetMaxEndColor(Color color)
+        maxEndColor = color
+    end
+
+    public action SetMaxEndColor(number r, number g, number b, number a)
+        SetColor(maxEndColor, r, g, b, a)
+    end
+
+    public action SetMinLifeTime (number minLife)
+        minLifeTime = minLife
+    end
+
+    public action SetMaxLifeTime (number maxLife)
+        maxLifeTime = maxLife
+        tempTime = maxLifeTime
+    end
+    
+    public action SetMinStartPosition(number x, number y, number z)
+        SetVector(minStartPosition, x, y, z)
+    end
+
+    public action SetMaxStartPosition(number x, number y, number z)
+        SetVector(maxStartPosition, x, y, z)
+    end
+
+    public action SetMinStartScale(number x, number y, number z)
+        SetVector(minStartScale, x, y, z)
+    end
+
+    public action SetMaxStartScale(number x, number y, number z)
+        SetVector(maxStartScale, x, y, z)
+    end
+
+    public action SetMinEndScale(number x, number y, number z)
+        SetVector(minEndScale, x, y, z)
+    end
+
+    public action SetMaxEndScale(number x, number y, number z)
+        SetVector(maxEndScale, x, y, z)
+    end
+
+    public action SetMinStartVelocity(number x, number y, number z)
+        SetVector(minStartVelocity, x, y, z)
+    end
+
+    public action SetMaxStartVelocity(number x, number y, number z)
+        SetVector(maxStartVelocity, x, y, z)
+    end
+
+    // Getter methods for emitter properties (Used by UI)
+    public action GetContinuousEffect returns boolean
+        return continuousEffect
+    end
+
+    public action GetEmissionRate returns integer
+        return emissionRate
+    end
+
+    public action GetGravity returns number
+        return gravity
+    end
+
+    public action GetParticleCount returns integer
+        return particleCount
+    end
+
+    public action GetMaxParticles returns integer
+        return maxParticles
+    end
+
+    public action GetShape returns text
+        return particleShape
+    end
+
+    public action GetMinStartColor returns Color
+        return minStartColor
+    end
+
+    public action GetMaxStartColor returns Color
+        return maxStartColor
+    end
+
+    public action GetMinEndColor returns Color
+        return minEndColor
+    end
+
+    public action GetMaxEndColor returns Color
+        return maxEndColor
+    end
+
+    public action GetMinLifeTime returns number
+        return minLifeTime
+    end
+
+    public action GetMaxLifeTime returns number
+        return maxLifeTime
+    end
+
+    public action GetMinStartPosition returns Vector3
+        return minStartPosition
+    end
+
+    public action GetMaxStartPosition returns Vector3
+        return maxStartPosition
+    end
+
+    public action GetMinStartScale returns Vector3
+        return minStartScale
+    end
+
+    public action GetMaxStartScale returns Vector3
+        return maxStartScale
+    end
+
+    public action GetMinEndScale returns Vector3
+        return minEndScale
+    end
+
+    public action GetMaxEndScale returns Vector3
+        return maxEndScale
+    end
+
+    public action GetMinStartVelocity returns Vector3
+        return minStartVelocity
+    end
+
+    public action GetMaxStartVelocity returns Vector3
+        return maxStartVelocity
+    end
+end

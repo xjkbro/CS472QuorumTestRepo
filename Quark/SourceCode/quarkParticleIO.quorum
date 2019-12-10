@@ -1,0 +1,307 @@
+use Libraries.Containers.Array
+use Libraries.Containers.Iterator
+use Libraries.Data.Formats.JavaScriptObjectNotation
+use Libraries.Game.Graphics.Color
+use Libraries.System.File
+
+class ParticleIO 
+
+    action WriteEmitterProperties(ParticleEmitter3D emitter, text emitterFileName) 
+        File propFile
+        JavaScriptObjectNotation continuousEffect
+        JavaScriptObjectNotation emissionRate
+        JavaScriptObjectNotation grvaity
+        JavaScriptObjectNotation json
+        JavaScriptObjectNotation properties
+        JavaScriptObjectNotation shape
+        JavaScriptObjectNotation minColor
+        JavaScriptObjectNotation maxColor
+        JavaScriptObjectNotation minEndScale
+        JavaScriptObjectNotation maxEndScale
+        JavaScriptObjectNotation minLifeTime
+        JavaScriptObjectNotation maxLifeTime
+        JavaScriptObjectNotation maxParticles
+        JavaScriptObjectNotation maxStartColor
+        JavaScriptObjectNotation minStartColor
+        JavaScriptObjectNotation minEndColor
+        JavaScriptObjectNotation maxEndColor
+        JavaScriptObjectNotation minStartPosition
+        JavaScriptObjectNotation maxStartPosition
+        JavaScriptObjectNotation minStartScale
+        JavaScriptObjectNotation maxStartScale
+        JavaScriptObjectNotation minStartVelocity
+        JavaScriptObjectNotation maxStartVelocity
+
+        json:Add("continuousEffect", emitter:GetContinuousEffect())
+        json:Add("emissionRate", emitter:GetEmissionRate())
+        json:Add("gravity", emitter:GetGravity())
+        json:Add("maxParticles", emitter:GetMaxParticles())
+        json:Add("minLifeTime", emitter:GetMinLifeTime())
+        json:Add("maxLifeTime", emitter:GetMaxLifeTime())
+        json:Add("shape", emitter:GetShape())
+
+        minColor:SetKey("minColor")                    //minColor
+        minColor:SetArray()
+        minColor:Add(emitter:GetMinStartColor():GetRed()*255)
+        minColor:Add(emitter:GetMinStartColor():GetBlue()*255)
+        minColor:Add(emitter:GetMinStartColor():GetGreen()*255)
+        minColor:Add(emitter:GetMinStartColor():GetAlpha()*255)
+        json:Add(minColor)
+
+        maxColor:SetKey("maxColor")                    //maxColor
+        maxColor:SetArray()
+        maxColor:Add(emitter:GetMaxStartColor():GetRed()*255)
+        maxColor:Add(emitter:GetMaxStartColor():GetBlue()*255)
+        maxColor:Add(emitter:GetMaxStartColor():GetGreen()*255)
+        maxColor:Add(emitter:GetMaxStartColor():GetAlpha()*255)
+        json:Add(maxColor)
+
+        minEndColor:SetKey("minEndColor")                    //minEndColor
+        minEndColor:SetArray()
+        minEndColor:Add(emitter:GetMinEndColor():GetRed()*255)
+        minEndColor:Add(emitter:GetMinEndColor():GetBlue()*255)
+        minEndColor:Add(emitter:GetMinEndColor():GetGreen()*255)
+        minEndColor:Add(emitter:GetMinEndColor():GetAlpha()*255)
+        json:Add(minEndColor)
+
+        maxEndColor:SetKey("maxEndColor")                    //maxEndColor
+        maxEndColor:SetArray()
+        maxEndColor:Add(emitter:GetMaxEndColor():GetRed()*255)
+        maxEndColor:Add(emitter:GetMaxEndColor():GetBlue()*255)
+        maxEndColor:Add(emitter:GetMaxEndColor():GetGreen()*255)
+        maxEndColor:Add(emitter:GetMaxEndColor():GetAlpha()*255)
+        json:Add(maxEndColor)
+
+        minStartPosition:SetKey("minStartPosition")
+        minStartPosition:SetArray()
+        minStartPosition:Add(emitter:GetMinStartPosition():GetX())
+        minStartPosition:Add(emitter:GetMinStartPosition():GetY())
+        minStartPosition:Add(emitter:GetMinStartPosition():GetZ())
+        json:Add(minStartPosition)
+
+        maxStartPosition:SetKey("maxStartPosition")
+        maxStartPosition:SetArray()
+        maxStartPosition:Add(emitter:GetMaxStartPosition():GetX())
+        maxStartPosition:Add(emitter:GetMaxStartPosition():GetY())
+        maxStartPosition:Add(emitter:GetMaxStartPosition():GetZ())
+        json:Add(maxStartPosition)
+
+        minStartScale:SetKey("minStartScale")
+        minStartScale:SetArray()
+        minStartScale:Add(emitter:GetMinStartScale():GetX())
+        minStartScale:Add(emitter:GetMinStartScale():GetY())
+        minStartScale:Add(emitter:GetMinStartScale():GetZ())
+        json:Add(minStartScale)
+
+        maxStartScale:SetKey("maxStartScale")
+        maxStartScale:SetArray()
+        maxStartScale:Add(emitter:GetMaxStartScale():GetX())
+        maxStartScale:Add(emitter:GetMaxStartScale():GetY())
+        maxStartScale:Add(emitter:GetMaxStartScale():GetZ())
+        json:Add(maxStartScale)
+
+        minEndScale:SetKey("minEndScale")
+        minEndScale:SetArray()
+        minEndScale:Add(emitter:GetMinEndScale():GetX())
+        minEndScale:Add(emitter:GetMinEndScale():GetY())
+        minEndScale:Add(emitter:GetMinEndScale():GetZ())
+        json:Add(minEndScale)
+
+        maxEndScale:SetKey("maxEndScale")
+        maxEndScale:SetArray()
+        maxEndScale:Add(emitter:GetMaxEndScale():GetX())
+        maxEndScale:Add(emitter:GetMaxEndScale():GetY())
+        maxEndScale:Add(emitter:GetMaxEndScale():GetZ())
+        json:Add(maxEndScale)
+
+        minStartVelocity:SetKey("minStartVelocity")
+        minStartVelocity:SetArray()
+        minStartVelocity:Add(emitter:GetMinStartVelocity():GetX())
+        minStartVelocity:Add(emitter:GetMinStartVelocity():GetY())
+        minStartVelocity:Add(emitter:GetMinStartVelocity():GetZ())
+        json:Add(minStartVelocity)
+
+        maxStartVelocity:SetKey("maxStartVelocity")
+        maxStartVelocity:SetArray()
+        maxStartVelocity:Add(emitter:GetMaxStartVelocity():GetX())
+        maxStartVelocity:Add(emitter:GetMaxStartVelocity():GetY())
+        maxStartVelocity:Add(emitter:GetMaxStartVelocity():GetZ())
+        json:Add(maxStartVelocity)
+
+        json:SetPrettyPrint(true)
+        propFile:SetAbsolutePath(emitterFileName) //Set file path to project directory
+        propFile:Write(json:ToText())
+    end
+
+    action ReadEmitterProperties(ParticleEmitter3D emitter, text emitterFileName)
+        File readFile
+        JavaScriptObjectNotation json
+
+        readFile:SetAbsolutePath(emitterFileName)
+
+        if readFile:Exists()
+            json:Read(readFile)
+            SetEmitterProperties(emitter, json)
+        else
+            output "File not found"
+        end
+    end
+
+    action SetEmitterProperties(ParticleEmitter3D emitter, JavaScriptObjectNotation json)
+        Array<number> minColor
+	Array<number> maxColor
+        Array<number> minEndColor
+        Array<number> maxEndColor
+	Array<number> minPos
+	Array<number> maxPos
+	Array<number> minStartVel
+	Array<number> maxStartVel
+	Array<number> minStartScale
+	Array<number> maxStartScale
+	Array<number> minEndScale
+	Array<number> maxEndScale
+     
+        Color c
+        Color c1
+        Color c2
+        Color c3
+        JavaScriptObjectNotation minColorArray
+	JavaScriptObjectNotation maxColorArray
+        JavaScriptObjectNotation minEndColorArray
+	JavaScriptObjectNotation maxEndColorArray
+	JavaScriptObjectNotation minPosArray
+	JavaScriptObjectNotation maxPosArray
+        JavaScriptObjectNotation minStartVelArray
+        JavaScriptObjectNotation maxStartVelArray
+	JavaScriptObjectNotation minStartScaleArray
+	JavaScriptObjectNotation maxStartScaleArray
+        JavaScriptObjectNotation minEndScaleArray
+        JavaScriptObjectNotation maxEndScaleArray
+	
+        emitter:SetContinuousEffect(json:GetBoolean("continuousEffect"))
+
+        emitter:SetEmissionRate(json:GetInteger("emissionRate"))
+
+        emitter:SetGravity(json:GetNumber("gravity"))
+
+        emitter:SetMaxParticles(json:GetInteger("maxParticles"))
+
+        emitter:SetShape(json:GetValue("shape"))
+
+        emitter:SetMinLifeTime(json:GetNumber("minLifeTime"))
+
+        emitter:SetMaxLifeTime(json:GetNumber("maxLifeTime"))
+
+        minColorArray = json:GetObject("minColor")
+        Iterator<JavaScriptObjectNotation>iter = minColorArray:GetIterator()
+        repeat while iter:HasNext()
+            JavaScriptObjectNotation nextItem = iter:Next()
+            minColor:Add(nextItem:GetNumber())
+        end
+        c:SetRed(minColor:Get(0)/255)
+        c:SetBlue(minColor:Get(1)/255)
+        c:SetGreen(minColor:Get(2)/255)
+        c:SetAlpha(minColor:Get(3)/255)
+        emitter:SetMinStartColor(c)
+
+        maxColorArray = json:GetObject("maxColor")
+        iter = maxColorArray:GetIterator()
+        repeat while iter:HasNext()
+            JavaScriptObjectNotation nextItem = iter:Next()
+            maxColor:Add(nextItem:GetNumber())
+        end
+        c1:SetRed(maxColor:Get(0)/255)
+        c1:SetBlue(maxColor:Get(1)/255)
+        c1:SetGreen(maxColor:Get(2)/255)
+        c1:SetAlpha(maxColor:Get(3)/255)
+        emitter:SetMaxStartColor(c1)
+
+        minEndColorArray = json:GetObject("minEndColor")
+        iter = minEndColorArray:GetIterator()
+        repeat while iter:HasNext()
+            JavaScriptObjectNotation nextItem = iter:Next()
+            minEndColor:Add(nextItem:GetNumber())
+        end
+        c2:SetRed(minEndColor:Get(0)/255)
+        c2:SetBlue(minEndColor:Get(1)/255)
+        c2:SetGreen(minEndColor:Get(2)/255)
+        c2:SetAlpha(minEndColor:Get(3)/255)
+        emitter:SetMinEndColor(c2)
+
+        maxEndColorArray = json:GetObject("maxEndColor")
+        iter = maxEndColorArray:GetIterator()
+        repeat while iter:HasNext()
+            JavaScriptObjectNotation nextItem = iter:Next()
+            maxEndColor:Add(nextItem:GetNumber())
+        end
+        c3:SetRed(maxEndColor:Get(0)/255)
+        c3:SetBlue(maxEndColor:Get(1)/255)
+        c3:SetGreen(maxEndColor:Get(2)/255)
+        c3:SetAlpha(maxEndColor:Get(3)/255)
+        emitter:SetMaxEndColor(c3)
+
+        minPosArray = json:GetObject("minStartPosition")
+        iter = minPosArray:GetIterator()
+        repeat while iter:HasNext()
+            JavaScriptObjectNotation nextItem = iter:Next()
+            minPos:Add(nextItem:GetNumber())
+        end
+        emitter:SetMinStartPosition(minPos:Get(0), minPos:Get(1), minPos:Get(2))
+
+        maxPosArray = json:GetObject("maxStartPosition")  
+        iter = maxPosArray:GetIterator()
+        repeat while iter:HasNext()
+            JavaScriptObjectNotation nextItem = iter:Next()
+            maxPos:Add(nextItem:GetNumber())
+        end
+        emitter:SetMaxStartPosition(maxPos:Get(0), maxPos:Get(1), maxPos:Get(2))
+
+        minStartScaleArray = json:GetObject("minStartScale")  
+        iter = minStartScaleArray:GetIterator()
+        repeat while iter:HasNext()
+            JavaScriptObjectNotation nextItem = iter:Next()
+            minStartScale:Add(nextItem:GetNumber())
+        end
+        emitter:SetMinStartScale(minStartScale:Get(0), minStartScale:Get(1), minStartScale:Get(2))
+
+        maxStartScaleArray = json:GetObject("maxStartScale") 
+        iter = maxStartScaleArray:GetIterator()
+        repeat while iter:HasNext()
+            JavaScriptObjectNotation nextItem = iter:Next()
+            maxStartScale:Add(nextItem:GetNumber())
+        end
+        emitter:SetMaxStartScale(maxStartScale:Get(0), maxStartScale:Get(1), maxStartScale:Get(2))
+   
+        minEndScaleArray = json:GetObject("minEndScale") 
+        iter = minEndScaleArray:GetIterator()
+        repeat while iter:HasNext()
+            JavaScriptObjectNotation nextItem = iter:Next()
+            minEndScale:Add(nextItem:GetNumber())
+        end
+        emitter:SetMinEndScale(minEndScale:Get(0), minEndScale:Get(1), minEndScale:Get(2))
+      
+        maxEndScaleArray = json:GetObject("maxEndScale")   
+        iter = maxEndScaleArray:GetIterator()
+        repeat while iter:HasNext()
+            JavaScriptObjectNotation nextItem = iter:Next()
+            maxEndScale:Add(nextItem:GetNumber())
+        end
+        emitter:SetMaxEndScale(maxEndScale:Get(0), maxEndScale:Get(1), maxEndScale:Get(2))
+     
+        minStartVelArray = json:GetObject("minStartVelocity")     
+        iter = minStartVelArray:GetIterator()
+        repeat while iter:HasNext()
+            JavaScriptObjectNotation nextItem = iter:Next()
+            minStartVel:Add(nextItem:GetNumber())
+        end
+        emitter:SetMinStartVelocity(minStartVel:Get(0), minStartVel:Get(1), minStartVel:Get(2))
+
+        maxStartVelArray = json:GetObject("maxStartVelocity")      
+        iter = maxStartVelArray:GetIterator()
+        repeat while iter:HasNext()
+            JavaScriptObjectNotation nextItem = iter:Next()
+            maxStartVel:Add(nextItem:GetNumber())
+        end
+        emitter:SetMaxStartVelocity(maxStartVel:Get(0), maxStartVel:Get(1), maxStartVel:Get(2))
+    end
+end

@@ -1,0 +1,80 @@
+use Libraries.Containers.Array
+use Libraries.Game.DesktopConfiguration
+use Libraries.Game.Game
+use Libraries.Game.Graphics.Color
+use Libraries.Game.Graphics.Drawable
+use Libraries.Interface.Controls.Button
+use Libraries.Interface.Controls.Control
+use Libraries.Interface.Controls.Icon
+use Libraries.Interface.Controls.MenuBar
+use Libraries.Interface.Controls.MenuItem
+use Libraries.Interface.Layouts.FlowLayout
+use Libraries.Interface.Layouts.LayoutProperties
+use Libraries.Interface.Layouts.ManualLayout
+
+class ParticleMenu
+
+    action Create(ParticleEmitter3D emitter, Main main) 
+        Array<MenuItem> headers
+        Button focuser
+        CloseFile close
+        Control container
+        FlowLayout flow
+        ManualLayout man
+        MenuBar menu
+        MenuItem header1            //FILE
+        MenuItem header1_1          //OpenJSON
+        MenuItem header1_2          //SaveJSON
+        MenuItem header1_3          //Close
+        MenuItem header2            //RESET
+        MenuItem header2_1          //Reset All
+        OpenFile open
+        ResetFile reset
+        SaveFile save
+
+        main:SetLayout(man)
+
+        container:SetLayout(flow)
+        container:SetPercentageWidth(1.0)
+        container:SetPercentageHeight(0.1)
+        container:SetPercentageY(0.9)
+
+        header1:Add(header1_1)      //Adds OpenJSON under FILE Header
+        header1:Add(header1_2)      //Adds SaveJSON under FILE Header
+        header1:Add(header1_3)      //Adds Close under FILE Header
+        headers:Add(header1)        //Adds File Menu to the MenuBar
+        header1:SetName("File")
+        header1_1:SetName("Open JSON File")
+        header1_2:SetName("Save JSON File")
+        header1_3:SetName("Close")
+
+        open:Create(emitter, main)
+        header1_1:SetBehavior(open)
+        
+        save:Create(emitter)
+        header1_2:SetBehavior(save)
+        
+        close:Create(main)
+        header1_3:SetBehavior(close)
+
+        //=====================================================================
+        header2:Add(header2_1)      //Adds Reset All under Reset Header
+        headers:Add(header2)        //Adds Reset Menu to the MenuBar
+        header2:SetName("Reset")
+        header2_1:SetName("Reset All")
+        
+        reset:Create(main)
+        header2_1:SetBehavior(reset)
+
+        menu:Add(headers)
+        container:Add(menu)
+
+        focuser:SetName(" ")
+        focuser:Hide()
+        focuser:SetNextFocus(menu)
+        focuser:SetPreviousFocus(menu)
+        main:Add(container)
+        main:SetFocus(focuser)
+        main:Add(focuser)
+    end
+end
